@@ -6,6 +6,9 @@
   "bactrian-x": {
     "file_name": "Bactrian-X.json"
   },
+  "bactrian-crosslingual": {
+    "file_name": "Bactrian-Crosslingual.jsonl"
+  },
   "alpaca_zh": {
     "file_name": "alpaca_data_zh_51k.json",
     "file_sha1": "0016a4df88f523aad8dc004ada7575896824a0dc"

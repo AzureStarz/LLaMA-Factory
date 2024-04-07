@@ -3,10 +3,10 @@
 base_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLaMA-Factory
 model_path=/home/export/base/ycsc_chenkh/hitici_02/online1/data/pretrained-models/Llama-2-7b
 template=llama2
-output_model=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_exp_output/tmp
+output_model=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_exp_output/bactrian-crosslingual_llama2-7b
 dataset_dir=${base_path}/data
-# dataset=bactrian-x
-dataset=alpaca_en
+dataset=bactrian-crosslingual
+# dataset=alpaca_en
 
 if [ ! -d ${output_model} ];then
     mkdir ${output_model}
@@ -25,14 +25,13 @@ deepspeed --master_port ${master_port} ${base_path}/src/train_bash.py \
     --lora_alpha 16 \
     --lora_target q_proj,v_proj \
     --do_train \
-    --preprocessing_num_workers 1 \
-    --dataloader_num_workers 1 \
+    --preprocessing_num_workers 16 \
+    --dataloader_num_workers 16 \
     --dataloader_pin_memory True \
     --model_name_or_path ${model_path} \
     --dataset_dir ${dataset_dir} \
     --dataset ${dataset} \
     --template ${template} \
-    --use_fast_tokenizer true \
     --output_dir ${output_model} \
     --overwrite_cache \
     --per_device_train_batch_size 4 \

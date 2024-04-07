@@ -14,6 +14,12 @@ class EvaluationArguments:
     task: str = field(
         metadata={"help": "Name of the evaluation task."},
     )
+    eval_template: Optional[str] = field(
+        metadata={"help": "template for specific evaluation tasks"},
+    )
+    eval_class: Optional[str] = field(
+        metadata={"help": "evaluator class for specific evaluation tasks"},
+    )
     task_dir: str = field(
         default="evaluation",
         metadata={"help": "Path to the folder containing the evaluation datasets."},
@@ -26,9 +32,17 @@ class EvaluationArguments:
         default=42,
         metadata={"help": "Random seed to be used with data loaders."},
     )
-    lang: Literal["en", "zh"] = field(
-        default="en",
+    lang: Optional[str] = field(
+        default=None,
         metadata={"help": "Language used at evaluation."},
+    )
+    lang_pair: Optional[str] = field(
+        default=None,
+        metadata={"help": "Translation directions in MMT"},
+    )
+    generation_config: Optional[str] = field(
+        default=None,
+        metadata={"help": "The generation config of the model."},
     )
     n_shot: int = field(
         default=5,
