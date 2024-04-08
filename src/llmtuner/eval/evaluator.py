@@ -22,7 +22,7 @@ COMET_DIR="/home/export/base/ycsc_chenkh/hitici_02/online1/data/pretrained-model
 # BLEURT_CKPT="/home/export/base/ycsc_chenkh/hitici_02/online1/LLM_for_mt/LLaMA/evaluation/bleurt/BLEURT-20"
 
 from ..data import get_template_and_fix_tokenizer
-from ..extras.constants import CHOICES, SUBJECTS
+from ..extras.constants import CHOICES, SUBJECTS, BI_CHOICES
 from ..hparams import get_eval_args
 from ..model import load_model, load_tokenizer
 from .template import get_eval_template
@@ -57,8 +57,9 @@ class Evaluator:
 class MultipleChoiceEvaluator(Evaluator):
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
         super().__init__(args)
+        self.choice_list = BI_CHOICES if self.eval_args.task == "xcopa" else CHOICES
         self.choice_inputs = [
-            self.tokenizer.encode(self.eval_template.prefix + ch, add_special_tokens=False)[-1] for ch in CHOICES
+            self.tokenizer.encode(self.eval_template.prefix + ch, add_special_tokens=False)[-1] for ch in self.choice_list
         ]
 
     @torch.inference_mode()

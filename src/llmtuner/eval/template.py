@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Sequence, Tuple
 
 from ..data import Role
-from ..extras.constants import CHOICES
+from ..extras.constants import CHOICES, BI_CHOICES
 
 @dataclass
 class EvalTemplate:
@@ -57,16 +57,23 @@ class MMLUEvalTemplate(MultipleChoiceTemplate):
 class MRCEvalTemplate(MultipleChoiceTemplate):
     passage: str
     question: str
+    choice_list: List[str]
     
     def _parse_example(self, example: Dict[str, str]) -> Tuple[str, str]:
         r"""
         input: a dict with keys {"passage", "question", "A", "B", "C", "D", "answer"}
         output: a tuple of (prompt, response)
         """
-        candidates = [self.choice.format(choice=ch, content=example[ch]) for ch in CHOICES if ch in example]
-        passage = self.passage.format(passage=example["passage"])
-        question = self.question.format(question=example["question"])
-        candidates = ["###\nChoices:"] + candidates
+        candidates = [self.choice.format(choice=ch, content=example[ch]) for ch in self.choice_list if ch in example]
+        passage = self.passage
+        if "passage" in example.keys():
+            passage = passage.format(passage=example["passage"])
+        question = self.question
+        if "question" in example.keys():
+            question = self.question.format(question=example["question"])
+        elif "question_type" in example.keys():
+            question = self.question.format(question_type=example["question_type"], premise=example["premise"])
+        # candidates = ["###\nChoices:"] + candidates
         return "".join([passage] + [question] + candidates + [self.answer]), example["answer"]
     
     def format_example(
@@ -154,8 +161,8 @@ def _register_mmlu_eval_template(name: str, system: str, choice: str, answer: st
 def _register_multilingual_machine_translation_eval_template(name: str, system: str, answer: str, force_decoder_prefix: str) -> None:
     eval_templates[name] = MMTEvalTemplate(system=system, answer=answer, force_decoder_prefix=force_decoder_prefix)
 
-def _register_machine_reading_comprehension_eval_template(name: str, system: str, choice: str, answer: str, passage: str, question: str, prefix: str) -> None:
-    eval_templates[name] = MRCEvalTemplate(system=system, choice=choice, answer=answer, passage=passage, question=question, prefix=prefix)
+def _register_machine_reading_comprehension_eval_template(name: str, system: str, choice: str, answer: str, passage: str, question: str, prefix: str, choice_list: List[str]) -> None:
+    eval_templates[name] = MRCEvalTemplate(system=system, choice=choice, answer=answer, passage=passage, question=question, prefix=prefix, choice_list=choice_list)
 
 def _register_abstractive_text_summarization_eval_template(name: str, system: str, answer: str, passage: str) -> None:
     eval_templates[name] = ATSEvalTemplate(system=system, answer=answer, passage=passage)
@@ -197,10 +204,24 @@ _register_machine_reading_comprehension_eval_template(
     name="belebele",
     system="Given the following passage, query, and answer choices, output the letter corresponding to the correct answer.\n\n",
     passage="###\nPassage:\n{passage}\n",
-    question="###\nQuestion:\n{question}\n",
+    question="###\nQuestion:\n{question}\n###\nChoice\n",
     choice="\n{choice}. {content}",
     answer="\n###\nAnswer: ",
     prefix=" ",
+    choice_list=CHOICES,
+)
+
+_register_machine_reading_comprehension_eval_template(
+    name="xcopa",
+    system="You are an AI assistant whose purpose is to perform open-domain commonsense causal reasoning. \
+        You will be provided a premise and two choices, where the task is to select the choice that more plausibly has a causal relation with the premise. \
+            Answer in the same format as the examples below:\n\n",
+    passage=" ",
+    question="What is the most likely {question_type} of the following event?\n{premise}\nHelp me pick the more plausible option:",
+    choice="\n{choice}. {content}",
+    answer="\nAnswer: ",
+    prefix=" ",
+    choice_list=BI_CHOICES,
 )
 
 _register_abstractive_text_summarization_eval_template(
@@ -220,7 +241,7 @@ _register_natural_language_inference_eval_template(
 )
 
 _register_natural_language_inference_eval_template(
-    name="pasw-x",
+    name="paws-x",
     system="You are an NLP assistant whose purpose is to perform Paraphrase Identification. \
         The goal of Paraphrase Identification is to determine whether a pair of sentences have the same meaning. \
             Answer as concisely as possible in the same format as the examples below:\n\n",

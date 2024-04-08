@@ -59,8 +59,8 @@ class Paws_x(datasets.GeneratorBasedBuilder):
     def _info(self):
         features = datasets.Features(
             {
-                "sentence1": datasets.Value("string"),
-                "sentence2": datasets.Value("string"),
+                "premise": datasets.Value("string"),
+                "hypothesis": datasets.Value("string"),
                 "label": datasets.Value("string"),
             }
         )
@@ -98,10 +98,10 @@ class Paws_x(datasets.GeneratorBasedBuilder):
     def _generate_examples(self, filepath):
         # Training set is in tsv format
         df = pd.read_csv(filepath, sep="\t")
-        df.columns = ["id", "sentence1", "sentence2", "label"]
+        df.columns = ["id", "premise", "hypothesis", "label"]
         # 利用apply方法将df["answer"]从0,1映射成False, True
         df["label"] = df["label"].apply(lambda x: self.MAPPING[str(x)])
-        selected_cols = ["sentence1", "sentence2", "label"]
+        selected_cols = ["premise", "hypothesis", "label"]
 
         for i, instance in enumerate(df[selected_cols].to_dict(orient="records")):
             yield i, instance

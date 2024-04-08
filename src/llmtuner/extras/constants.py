@@ -4,6 +4,7 @@ from typing import Dict, Optional
 
 
 CHOICES = ["A", "B", "C", "D"]
+BI_CHOICES = ["A", "B"]
 
 DATA_CONFIG = "dataset_info.json"
 
