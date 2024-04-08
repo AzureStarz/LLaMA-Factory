@@ -433,6 +433,7 @@ class ATSEvaluator(GenerationEvaluator):
         avg_rouge_l = sum(rouge_l) / len(rouge_l)
         return {"rouge_1": avg_rouge_1, "rouge_l": avg_rouge_l}
 
+#TODO improve the evaluation efficiency (too much fail cases happened)
 class NLIEvaluator(GenerationEvaluator):
 
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
@@ -455,7 +456,7 @@ class NLIEvaluator(GenerationEvaluator):
             **kwargs,
         )
 
-        inputs, outputs, labels, src_sents = [], [], [], []
+        inputs, outputs, labels = [], [], []
         for i in trange(len(dataset[self.data_args.split]), desc="Formatting batches", position=1, leave=False):
             support_set = (
                 dataset["train"].shuffle().select(range(min(self.eval_args.n_shot, len(dataset["train"]))))
@@ -488,7 +489,7 @@ class NLIEvaluator(GenerationEvaluator):
             results.append({"prediction": output, "reference": label})
 
         result_prefix = self.eval_args.eval_template + '_' + self.eval_args.lang
-        metrics_results = self._calculate_metrics(hypotheses=outputs, labels=labels, source_sentences=src_sents)
+        metrics_results = self._calculate_metrics(hypotheses=outputs, labels=labels)
         self._save_results(results=results, metric_results=metrics_results, results_prefix=result_prefix)
     
     def _calculate_metrics(self, hypotheses: List[str], labels: List[str]) -> Dict[str, float]:
