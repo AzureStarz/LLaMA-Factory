@@ -125,6 +125,28 @@ class ATSEvalTemplate(EvalTemplate):
         """
         return self._format_example(target_data, support_set)
 
+@dataclass
+class NLIEvalTemplate(EvalTemplate):
+    question: str
+    mapping = {'entailment': 'True', 'contradiction': 'False', 'neutral': 'Neither'}
+    
+    def _parse_example(self, example: Dict[str, str]) -> Tuple[str, str]:
+        r"""
+        input: a dict with keys {"premise", "hypothesis", "label"}
+        output: a tuple of (prompt, response)
+        """
+        question = self.question.format(question=example["hypothesis"])
+        return example["premise"] + question + self.answer, self.mapping[example["label"]]
+    
+    def format_example(
+        self, target_data: Dict[str, str], support_set: Sequence[Dict[str, str]]
+    ) -> List[Dict[str, str]]:
+        r"""
+        here template attribute denotes the language pair
+        Converts dataset examples to messages.
+        """
+        return self._format_example(target_data, support_set)
+
 eval_templates: Dict[str, "EvalTemplate"] = {}
 
 def _register_mmlu_eval_template(name: str, system: str, choice: str, answer: str, prefix: str) -> None:
@@ -138,6 +160,9 @@ def _register_machine_reading_comprehension_eval_template(name: str, system: str
 
 def _register_abstractive_text_summarization_eval_template(name: str, system: str, answer: str, passage: str) -> None:
     eval_templates[name] = ATSEvalTemplate(system=system, answer=answer, passage=passage)
+
+def _register_natural_language_inference_eval_template(name: str, system: str, answer: str, question: str) -> None:
+    eval_templates[name] = NLIEvalTemplate(system=system, answer=answer, question=question)
 
 def get_eval_template(name: str) -> "EvalTemplate":
     eval_template = eval_templates.get(name, None)
@@ -184,4 +209,13 @@ _register_abstractive_text_summarization_eval_template(
     system="You are an NLP assistant whose purpose is to summarize any given article. You should summarize all important information concisely in the same language in which you have been provided the document.\n\n",
     passage="###\nPassage:\n{passage}\n",
     answer="###\nSummary: ",
+)
+
+_register_natural_language_inference_eval_template(
+    name="xnli",
+    system="You are an NLP assistant whose purpose is to solve Natural Language Inference(NLI) problems. \
+        NLI is the task of determining the inference relation between two (short, ordered) texts: entailment, contradiction, or neutral. \
+            Answer as concisely as possible in the same format as the examples below:",
+    question="\nQuestion:\n{question}\n",
+    answer="True, False, or Neither?\nAnswer: "
 )

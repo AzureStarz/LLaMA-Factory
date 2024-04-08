@@ -1,4 +1,4 @@
-from .evaluator import Evaluator, MultipleChoiceEvaluator, MMLUEvaluator, MRCEvaluator, GenerationEvaluator, MMTEvaluator, ATSEvaluator
+from .evaluator import Evaluator, MultipleChoiceEvaluator, MMLUEvaluator, MRCEvaluator, GenerationEvaluator, MMTEvaluator, ATSEvaluator, NLIEvaluator
 
 
-__all__ = ["Evaluator", "MultipleChoiceEvaluator", "MMLUEvaluator", "MRCEvaluator", "GenerationEvaluator", "MMTEvaluator", "ATSEvaluator"]
+__all__ = ["Evaluator", "MultipleChoiceEvaluator", "MMLUEvaluator", "MRCEvaluator", "GenerationEvaluator", "MMTEvaluator", "ATSEvaluator", "NLIEvaluator"]
