@@ -128,15 +128,14 @@ class ATSEvalTemplate(EvalTemplate):
 @dataclass
 class NLIEvalTemplate(EvalTemplate):
     question: str
-    mapping = {'entailment': 'True', 'contradiction': 'False', 'neutral': 'Neither'}
-    
+
     def _parse_example(self, example: Dict[str, str]) -> Tuple[str, str]:
         r"""
         input: a dict with keys {"premise", "hypothesis", "label"}
         output: a tuple of (prompt, response)
         """
         question = self.question.format(question=example["hypothesis"])
-        return example["premise"] + question + self.answer, self.mapping[example["label"]]
+        return example["premise"] + question + self.answer, example["label"]
     
     def format_example(
         self, target_data: Dict[str, str], support_set: Sequence[Dict[str, str]]

@@ -487,7 +487,7 @@ class NLIEvaluator(GenerationEvaluator):
         for output, label in zip(outputs, labels):
             results.append({"prediction": output, "reference": label})
 
-        result_prefix = self.eval_args.eval_template + '_' + self.eval_args.lang_pair
+        result_prefix = self.eval_args.eval_template + '_' + self.eval_args.lang
         metrics_results = self._calculate_metrics(hypotheses=outputs, labels=labels, source_sentences=src_sents)
         self._save_results(results=results, metric_results=metrics_results, results_prefix=result_prefix)
     

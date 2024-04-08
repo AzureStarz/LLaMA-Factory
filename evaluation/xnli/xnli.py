@@ -62,6 +62,7 @@ class XNLI(datasets.GeneratorBasedBuilder):
         )
         for language in language_list
     ]
+    MAPPING = {'entailment': 'True', 'contradiction': 'False', 'neutral': 'Neither'}
 
     def _info(self):
         features = datasets.Features(
@@ -109,6 +110,6 @@ class XNLI(datasets.GeneratorBasedBuilder):
                 instance = {
                     "premise": data["sentence1"],
                     "hypothesis": data["sentence2"],
-                    "label": data["gold_label"]
+                    "label": self.MAPPING[data["gold_label"]]
                 }
                 yield i, instance
