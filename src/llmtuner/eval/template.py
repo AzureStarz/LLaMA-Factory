@@ -225,6 +225,20 @@ _register_machine_reading_comprehension_eval_template(
 )
 
 _register_machine_reading_comprehension_eval_template(
+    name="jigsaw-x",
+    system="You are an NLP assistant whose purpose is to detect whether the comment contains toxicity. \
+        Toxicity is defined as anything rude, disrespectful or otherwise likely to make someone leave a discussion. \
+            The objective is to identify toxic comments. Answer as concisely as possible in the same format as the examples below:\n\n",
+    passage="Comment:\n{passage}\n",
+    question="Should this online comment be removed for its toxicity?",
+    choice="\n{choice}. {content}",
+    answer="\nAnswer: ",
+    prefix=" ",
+    choice_list=BI_CHOICES,
+)
+
+
+_register_machine_reading_comprehension_eval_template(
     name="xcopa",
     system="You are an AI assistant whose purpose is to perform open-domain commonsense causal reasoning. \
         You will be provided a premise and two choices, where the task is to select the choice that more plausibly has a causal relation with the premise. \
