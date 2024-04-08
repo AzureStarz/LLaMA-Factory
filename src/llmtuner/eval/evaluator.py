@@ -30,6 +30,7 @@ class Evaluator:
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
         self.model_args, self.data_args, self.eval_args, finetuning_args = get_eval_args(args)
         self.tokenizer = load_tokenizer(self.model_args)
+        #TODO use left padding or right padding?
         self.tokenizer.padding_side = "left"  # avoid overflow issue in batched inference for llama2
         self.template = get_template_and_fix_tokenizer(self.tokenizer, self.data_args.template)
         self.model = load_model(self.tokenizer, self.model_args, finetuning_args)
@@ -57,8 +58,13 @@ class MultipleChoiceEvaluator(Evaluator):
     @torch.inference_mode()
     def batch_inference(self, batch_input: Dict[str, torch.Tensor]) -> List[str]:
         logits = self.model(**batch_input).logits
-        lengths = torch.sum(batch_input["attention_mask"], dim=-1)
-        word_probs = torch.stack([logits[i, lengths[i] - 1] for i in range(len(lengths))], dim=0)
+        #TODO accoding to the padding side
+        # right padding?
+        # lengths = torch.sum(batch_input["attention_mask"], dim=-1)
+        # left padding?
+        # lengths = [len(batch_input.input_ids[k]) for k in range(len(batch_input.input_ids))]
+        # word_probs = torch.stack([logits[i, lengths[i] - 1] for i in range(len(lengths))], dim=0)
+        word_probs = torch.stack([logits[i, -1, :] for i in range(len(batch_input.input_ids))], dim=0)
         choice_probs = torch.nn.functional.softmax(word_probs[:, self.choice_inputs], dim=-1).detach()
         return [chr(ord("A") + offset.item()) for offset in torch.argmax(choice_probs, dim=-1)]
 
@@ -156,7 +162,7 @@ class MRCEvaluator(MultipleChoiceEvaluator):
         # 返回准确率
         return {'accuracy': accuracy}
     
-    def eval(self) -> None:
+    def eval(self) -> None:        
         if "trust_remote_code" in inspect.signature(load_dataset).parameters:  # for datasets==2.16.0
             kwargs = {"trust_remote_code": True}
         else:
@@ -202,7 +208,8 @@ class MRCEvaluator(MultipleChoiceEvaluator):
             results.append({"prediction": output, "reference": label})
 
         result_prefix = self.eval_args.eval_template + '_' + self.eval_args.lang
-        metrics_results = self._calculate_metrics(predictions=outputs, labels=labels)
+        # metrics_results = self._calculate_metrics(predictions=outputs, labels=labels)
+        metrics_results = {'accuracy': np.mean(np.array(outputs) == np.array(labels))}
         self._save_results(results=results, metric_results=metrics_results, results_prefix=result_prefix)
 
 class GenerationEvaluator(Evaluator):

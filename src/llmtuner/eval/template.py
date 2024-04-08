@@ -64,10 +64,10 @@ class MRCEvalTemplate(MultipleChoiceTemplate):
         output: a tuple of (prompt, response)
         """
         candidates = [self.choice.format(choice=ch, content=example[ch]) for ch in CHOICES if ch in example]
-        self.passage = self.passage.format(passage=example["passage"])
-        self.question = self.question.format(question=example["question"])
+        passage = self.passage.format(passage=example["passage"])
+        question = self.question.format(question=example["question"])
         candidates = ["###\nChoices:"] + candidates
-        return "".join([self.passage] + [self.question] + candidates + [self.answer]), example["answer"]
+        return "".join([passage] + [question] + candidates + [self.answer]), example["answer"]
     
     def format_example(
         self, target_data: Dict[str, str], support_set: Sequence[Dict[str, str]]
@@ -90,7 +90,7 @@ class MMTEvalTemplate(EvalTemplate):
         input: a dict with keys {"source", "reference"}
         output: a tuple of (prompt, response)
         """
-        return example["source"] + '\n' + self.answer, self.force_decoder_prefix + example["reference"]
+        return example["input"] + '\n' + self.answer, self.force_decoder_prefix + example["output"]
     
     def format_example(
         self, target_data: Dict[str, str], support_set: Sequence[Dict[str, str]], lang_pair: str
