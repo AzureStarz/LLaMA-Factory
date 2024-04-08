@@ -90,7 +90,7 @@ class MMTEvalTemplate(EvalTemplate):
         input: a dict with keys {"source", "reference"}
         output: a tuple of (prompt, response)
         """
-        return example["input"] + '\n' + self.answer, self.force_decoder_prefix + example["output"]
+        return example["input"] + self.answer, self.force_decoder_prefix + example["output"]
     
     def format_example(
         self, target_data: Dict[str, str], support_set: Sequence[Dict[str, str]], lang_pair: str
@@ -104,6 +104,26 @@ class MMTEvalTemplate(EvalTemplate):
         self.system = self.system.format(src=src, tgt=tgt)
         return self._format_example(target_data, support_set)
 
+@dataclass
+class ATSEvalTemplate(EvalTemplate):
+    passage: str
+    
+    def _parse_example(self, example: Dict[str, str]) -> Tuple[str, str]:
+        r"""
+        input: a dict with keys {"passage", "summary"}
+        output: a tuple of (prompt, response)
+        """
+        passage = self.passage.format(passage=example["passage"])
+        return passage + self.answer, example["summary"]
+    
+    def format_example(
+        self, target_data: Dict[str, str], support_set: Sequence[Dict[str, str]]
+    ) -> List[Dict[str, str]]:
+        r"""
+        here template attribute denotes the language pair
+        Converts dataset examples to messages.
+        """
+        return self._format_example(target_data, support_set)
 
 eval_templates: Dict[str, "EvalTemplate"] = {}
 
@@ -116,6 +136,8 @@ def _register_multilingual_machine_translation_eval_template(name: str, system: 
 def _register_machine_reading_comprehension_eval_template(name: str, system: str, choice: str, answer: str, passage: str, question: str, prefix: str) -> None:
     eval_templates[name] = MRCEvalTemplate(system=system, choice=choice, answer=answer, passage=passage, question=question, prefix=prefix)
 
+def _register_abstractive_text_summarization_eval_template(name: str, system: str, answer: str, passage: str) -> None:
+    eval_templates[name] = ATSEvalTemplate(system=system, answer=answer, passage=passage)
 
 def get_eval_template(name: str) -> "EvalTemplate":
     eval_template = eval_templates.get(name, None)
@@ -155,4 +177,11 @@ _register_machine_reading_comprehension_eval_template(
     choice="\n{choice}. {content}",
     answer="\n###\nAnswer: ",
     prefix=" ",
+)
+
+_register_abstractive_text_summarization_eval_template(
+    name="xlsum",
+    system="You are an NLP assistant whose purpose is to summarize any given article. You should summarize all important information concisely in the same language in which you have been provided the document.\n\n",
+    passage="###\nPassage:\n{passage}\n",
+    answer="###\nSummary: ",
 )

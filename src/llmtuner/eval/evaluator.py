@@ -15,6 +15,7 @@ from transformers import GenerationConfig
 # metrics related
 from comet import load_from_checkpoint
 from sacrebleu.metrics import BLEU
+from rouge_score import rouge_scorer
 # from bleurt import score
 COMET_DIR="/home/export/base/ycsc_chenkh/hitici_02/online1/data/pretrained-models/wmt22-comet-da/checkpoints/model.ckpt"
 # BLEURT_CKPT="/home/export/base/ycsc_chenkh/hitici_02/online1/LLM_for_mt/LLaMA/evaluation/bleurt/BLEURT-20"
@@ -232,7 +233,7 @@ class GenerationEvaluator(Evaluator):
             "return_dict_in_generate": True,
             # "output_scores": True,
             # "max_length": max_length,
-            # "max_new_tokens": 512,
+            "max_new_tokens": 512,
         }
         if self.eval_args.generation_config is not None:
             generate_params["generation_config"] = self.genration_config
@@ -245,7 +246,7 @@ class GenerationEvaluator(Evaluator):
         for k in range(len(generation_output)):
             # res.append(_del_endswith_none(self.tokenizer.decode(generation_output[k][lengths[k]:], skip_special_tokens=True).strip()))
             prediction = self.tokenizer.decode(generation_output[k][input_lengths[k]:], skip_special_tokens=True).strip()
-            if self.eval_template.force_decoder_prefix is not None:
+            if hasattr(self.eval_template, 'force_decoder_prefix'):
                 prediction = prediction.replace(self.eval_template.force_decoder_prefix, "")
             res.append(prediction)
         return res
@@ -362,6 +363,70 @@ class MMTEvaluator(GenerationEvaluator):
         }
         return score_dict
 
+class ATSEvaluator(GenerationEvaluator):
+
+    def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
+        super().__init__(args)
+        self.rouge = rouge_scorer.RougeScorer(['rouge1', 'rougeL'], use_stemmer=True, lang=self.eval_args.lang)
+        
+    def eval(self) -> None:
+        if "trust_remote_code" in inspect.signature(load_dataset).parameters:  # for datasets==2.16.0
+            kwargs = {"trust_remote_code": True}
+        else:
+            kwargs = {}
+
+        dataset = load_dataset(
+            path=os.path.join(self.eval_args.task_dir, self.eval_args.task),
+            name=self.eval_args.lang,
+            cache_dir=self.model_args.cache_dir,
+            download_mode=self.eval_args.download_mode,
+            token=self.model_args.hf_hub_token,
+            **kwargs,
+        )
+
+        inputs, outputs, labels, src_sents = [], [], [], []
+        for i in trange(len(dataset[self.data_args.split]), desc="Formatting batches", position=1, leave=False):
+            support_set = (
+                dataset["validation"].shuffle().select(range(min(self.eval_args.n_shot, len(dataset["validation"]))))
+            )
+            
+            messages = self.eval_template.format_example(
+                target_data=dataset[self.data_args.split][i],
+                support_set=support_set,
+            )
+
+            input_ids, _ = self.template.encode_oneturn(tokenizer=self.tokenizer, messages=messages)
+            inputs.append({"input_ids": input_ids, "attention_mask": [1] * len(input_ids)})
+            labels.append(messages[-1]["content"])
+
+        for i in trange(
+            0, len(inputs), self.eval_args.batch_size, desc="Predicting batches", position=1, leave=False
+        ):
+            batch_input = self.tokenizer.pad(
+                inputs[i : i + self.eval_args.batch_size], return_attention_mask=True, return_tensors="pt"
+            ).to(self.model.device)
+            preds = self.batch_generation(batch_input)
+            outputs += preds
+
+        # 确保 outputs 和 labels 的长度相同
+        assert len(outputs) == len(labels)
+        # 创建一个空的结果列表
+        results = []
+        # 遍历 outputs 和 labels，将每一对 prediction 和 reference 打包为一个字典，然后添加到结果列表中
+        for output, label in zip(outputs, labels):
+            results.append({"prediction": output, "reference": label})
+
+        result_prefix = self.eval_args.eval_template + '_' + self.eval_args.lang_pair
+        metrics_results = self._calculate_metrics(hypotheses=outputs, labels=labels, source_sentences=src_sents)
+        self._save_results(results=results, metric_results=metrics_results, results_prefix=result_prefix)
+    
+    def _calculate_metrics(self, hypotheses: List[str], labels: List[str]) -> Dict[str, float]:
+        scores = [self.rouge.score(hypo, label) for hypo, label in zip(hypotheses, labels)]
+        rouge_1 = [score.rouge1 for score in scores]
+        rouge_l = [score.rougeL for score in scores]
+        avg_rouge_1 = sum(rouge_1) / len(rouge_1)
+        avg_rouge_l = sum(rouge_l) / len(rouge_l)
+        return {"rouge_1": avg_rouge_1, "rouge_l": avg_rouge_l}
 
 # if __name__ == "__main__":
 #     evaluator = Evaluator()

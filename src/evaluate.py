@@ -1,5 +1,5 @@
 import argparse
-from llmtuner import MRCEvaluator, MMLUEvaluator, MMTEvaluator
+from llmtuner import MRCEvaluator, MMLUEvaluator, MMTEvaluator, ATSEvaluator
 
 def main():
     # 创建一个 ArgumentParser 对象
@@ -16,6 +16,8 @@ def main():
         evaluator_class = MMTEvaluator
     elif args.eval_class == 'mrc':
         evaluator_class = MRCEvaluator
+    elif args.eval_class == 'ats':
+        evaluator_class = ATSEvaluator
     else:
         raise NotImplementedError(f"eval_class {args.eval_class} is not implemented.")
         # evaluator_class = Evaluator  # Default evaluator
