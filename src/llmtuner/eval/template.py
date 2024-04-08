@@ -212,7 +212,7 @@ _register_machine_reading_comprehension_eval_template(
 )
 
 _register_machine_reading_comprehension_eval_template(
-    name="xstorycloze",
+    name="xstory_cloze",
     system="You are an AI assistant whose purpose is to perform story continuation. \
         You will be provided a story and two choices, where the task is to select the choice that is more plausibly the continuation for the story. \
             Answer in the same format as the examples below:\n\n",
