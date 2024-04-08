@@ -214,7 +214,16 @@ _register_natural_language_inference_eval_template(
     name="xnli",
     system="You are an NLP assistant whose purpose is to solve Natural Language Inference(NLI) problems. \
         NLI is the task of determining the inference relation between two (short, ordered) texts: entailment, contradiction, or neutral. \
-            Answer as concisely as possible in the same format as the examples below:",
+            Answer as concisely as possible in the same format as the examples below:\n\n",
     question="\nQuestion:\n{question}\n",
     answer="True, False, or Neither?\nAnswer: "
+)
+
+_register_natural_language_inference_eval_template(
+    name="pasw-x",
+    system="You are an NLP assistant whose purpose is to perform Paraphrase Identification. \
+        The goal of Paraphrase Identification is to determine whether a pair of sentences have the same meaning. \
+            Answer as concisely as possible in the same format as the examples below:\n\n",
+    question="\nQuestion:\n{question}\n",
+    answer="True or False?\nAnswer: "
 )
