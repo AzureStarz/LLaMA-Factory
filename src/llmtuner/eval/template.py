@@ -114,6 +114,7 @@ class MMTEvalTemplate(EvalTemplate):
 @dataclass
 class ATSEvalTemplate(EvalTemplate):
     passage: str
+    question: str
     
     def _parse_example(self, example: Dict[str, str]) -> Tuple[str, str]:
         r"""
@@ -121,7 +122,10 @@ class ATSEvalTemplate(EvalTemplate):
         output: a tuple of (prompt, response)
         """
         passage = self.passage.format(passage=example["passage"])
-        return passage + self.answer, example["summary"]
+        question = self.question
+        if "question" in example.keys():
+            question = self.question.format(question=example["question"])
+        return passage + question + self.answer, example["summary"]
     
     def format_example(
         self, target_data: Dict[str, str], support_set: Sequence[Dict[str, str]]
@@ -164,8 +168,8 @@ def _register_multilingual_machine_translation_eval_template(name: str, system: 
 def _register_machine_reading_comprehension_eval_template(name: str, system: str, choice: str, answer: str, passage: str, question: str, prefix: str, choice_list: List[str]) -> None:
     eval_templates[name] = MRCEvalTemplate(system=system, choice=choice, answer=answer, passage=passage, question=question, prefix=prefix, choice_list=choice_list)
 
-def _register_abstractive_text_summarization_eval_template(name: str, system: str, answer: str, passage: str) -> None:
-    eval_templates[name] = ATSEvalTemplate(system=system, answer=answer, passage=passage)
+def _register_abstractive_text_summarization_eval_template(name: str, system: str, answer: str, passage: str, question: str) -> None:
+    eval_templates[name] = ATSEvalTemplate(system=system, answer=answer, passage=passage, question=question)
 
 def _register_natural_language_inference_eval_template(name: str, system: str, answer: str, question: str) -> None:
     eval_templates[name] = NLIEvalTemplate(system=system, answer=answer, question=question)
@@ -237,6 +241,17 @@ _register_machine_reading_comprehension_eval_template(
     choice_list=BI_CHOICES,
 )
 
+_register_machine_reading_comprehension_eval_template(
+    name="xwinograd",
+    system="You are an NLP assistant whose purpose is to fill in the blank according to the context. \
+        Answer as concisely as possible in the same format as the examples below:\n\n",
+    passage="\nSentence:\n{passage}\n",
+    question="Which of the following choices would you choose to replace the \'_\' to make the sentence coherent?",
+    choice="\n{choice}. {content}",
+    answer="\nAnswer: ",
+    prefix=" ",
+    choice_list=BI_CHOICES,
+)
 
 _register_machine_reading_comprehension_eval_template(
     name="xcopa",
@@ -255,7 +270,18 @@ _register_abstractive_text_summarization_eval_template(
     name="xlsum",
     system="You are an NLP assistant whose purpose is to summarize any given article. You should summarize all important information concisely in the same language in which you have been provided the document.\n\n",
     passage="###\nPassage:\n{passage}\n",
+    question=" ",
     answer="###\nSummary: ",
+)
+
+_register_abstractive_text_summarization_eval_template(
+    name="mlqa",
+    system="You are an NLP assistant whose purpose is to solve reading comprehension problems. \
+        You will be provided questions on a set of passages and you will need to provide the answer as it appears in the passage. \
+            The answer should be in the same language as the question and the passage.\n\n",
+    passage="\nPassage:\n{passage}\n",
+    question="\nQuestion:\n{question}\n",
+    answer="\nReferring to the passage above, the correct answer to the given question is: ",
 )
 
 _register_natural_language_inference_eval_template(

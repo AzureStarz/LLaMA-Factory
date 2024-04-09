@@ -23,6 +23,7 @@ COMET_DIR="/home/export/base/ycsc_chenkh/hitici_02/online1/data/pretrained-model
 
 from ..data import get_template_and_fix_tokenizer
 from ..extras.constants import CHOICES, SUBJECTS, BI_CHOICES
+from ..extras.mlqa_evaluation import mlqa_evaluate
 from ..hparams import get_eval_args
 from ..model import load_model, load_tokenizer
 from .template import get_eval_template
@@ -390,7 +391,7 @@ class ATSEvaluator(GenerationEvaluator):
             **kwargs,
         )
 
-        inputs, outputs, labels, src_sents = [], [], [], []
+        inputs, outputs, labels, q_ids = [], [], [], []
         for i in trange(len(dataset[self.data_args.split]), desc="Formatting batches", position=1, leave=False):
             support_set = (
                 dataset["validation"].shuffle().select(range(min(self.eval_args.n_shot, len(dataset["validation"]))))
@@ -404,6 +405,7 @@ class ATSEvaluator(GenerationEvaluator):
             input_ids, _ = self.template.encode_oneturn(tokenizer=self.tokenizer, messages=messages)
             inputs.append({"input_ids": input_ids, "attention_mask": [1] * len(input_ids)})
             labels.append(messages[-1]["content"])
+            q_ids.append(dataset[self.data_args.split][i]['id'])
 
         for i in trange(
             0, len(inputs), self.eval_args.batch_size, desc="Predicting batches", position=1, leave=False
@@ -422,8 +424,12 @@ class ATSEvaluator(GenerationEvaluator):
         for output, label in zip(outputs, labels):
             results.append({"prediction": output, "reference": label})
 
-        result_prefix = self.eval_args.eval_template + '_' + self.eval_args.lang_pair
-        metrics_results = self._calculate_metrics(hypotheses=outputs, labels=labels, source_sentences=src_sents)
+        result_prefix = self.eval_args.eval_template + '_' + self.eval_args.lang
+        if 'mlqa' in self.eval_args.task:
+            predictions = {q_id: output for q_id, output in zip(q_ids, outputs)}
+            metrics_results = mlqa_evaluate(predictions, self.eval_args.lang)
+        else:
+            metrics_results = self._calculate_metrics(hypotheses=outputs, labels=labels)
         self._save_results(results=results, metric_results=metrics_results, results_prefix=result_prefix)
     
     def _calculate_metrics(self, hypotheses: List[str], labels: List[str]) -> Dict[str, float]:
