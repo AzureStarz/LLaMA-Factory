@@ -146,6 +146,17 @@ def mlqa_evaluate(predictions, lang):
         return evaluate(dataset, predictions, lang)
     else:
         raise Exception('Dataset not found')
+    
+def xquad_evaluate(predictions, lang):
+    file_path = f'/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLaMA-Factory/evaluation/xquad/data/test/xquad.{lang}.json'
+    dataset = None
+    with open(file_path) as dataset_file:
+        dataset_json = json.load(dataset_file)
+        dataset = dataset_json['data']
+    if dataset:
+        return evaluate(dataset, predictions, lang)
+    else:
+        raise Exception('Dataset not found')
 
 if __name__ == '__main__':
     expected_version = '1.0'

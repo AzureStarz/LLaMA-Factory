@@ -46,6 +46,8 @@ with open(dev_filename, 'r') as dataset_file:
                 q_id = qa['id']
                 question = qa['question']
                 answers = [answer['text'] for answer in qa['answers']]
+                if len(answers) == 0:
+                    continue
                 data = {
                     'id': q_id,
                     'context': context,

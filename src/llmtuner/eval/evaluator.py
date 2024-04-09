@@ -23,7 +23,7 @@ COMET_DIR="/home/export/base/ycsc_chenkh/hitici_02/online1/data/pretrained-model
 
 from ..data import get_template_and_fix_tokenizer
 from ..extras.constants import CHOICES, SUBJECTS, BI_CHOICES
-from ..extras.mlqa_evaluation import mlqa_evaluate
+from ..extras.mlqa_evaluation import mlqa_evaluate, xquad_evaluate
 from ..hparams import get_eval_args
 from ..model import load_model, load_tokenizer
 from .template import get_eval_template
@@ -425,11 +425,15 @@ class ATSEvaluator(GenerationEvaluator):
             results.append({"prediction": output, "reference": label})
 
         result_prefix = self.eval_args.eval_template + '_' + self.eval_args.lang
-        if 'mlqa' in self.eval_args.task or 'xquad' in self.eval_args.task:
-            predictions = {q_id: output for q_id, output in zip(q_ids, outputs)}
+        
+        predictions = {q_id: output for q_id, output in zip(q_ids, outputs)}
+        if 'mlqa' in self.eval_args.task:
             metrics_results = mlqa_evaluate(predictions, self.eval_args.lang)
+        elif 'xquad' in self.eval_args.task:
+            metrics_results = xquad_evaluate(predictions, self.eval_args.lang)    
         else:
             metrics_results = self._calculate_metrics(hypotheses=outputs, labels=labels)
+
         self._save_results(results=results, metric_results=metrics_results, results_prefix=result_prefix)
     
     def _calculate_metrics(self, hypotheses: List[str], labels: List[str]) -> Dict[str, float]:
