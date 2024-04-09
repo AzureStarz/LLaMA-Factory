@@ -17,6 +17,7 @@ from transformers import GenerationConfig
 from comet import load_from_checkpoint
 from sacrebleu.metrics import BLEU
 from rouge_score import rouge_scorer
+from seqeval.metrics import classification_report, f1_score
 # from bleurt import score
 COMET_DIR="/home/export/base/ycsc_chenkh/hitici_02/online1/data/pretrained-models/wmt22-comet-da/checkpoints/model.ckpt"
 # BLEURT_CKPT="/home/export/base/ycsc_chenkh/hitici_02/online1/LLM_for_mt/LLaMA/evaluation/bleurt/BLEURT-20"
@@ -405,7 +406,8 @@ class ATSEvaluator(GenerationEvaluator):
             input_ids, _ = self.template.encode_oneturn(tokenizer=self.tokenizer, messages=messages)
             inputs.append({"input_ids": input_ids, "attention_mask": [1] * len(input_ids)})
             labels.append(messages[-1]["content"])
-            q_ids.append(dataset[self.data_args.split][i]['id'])
+            if 'id' in dataset[self.data_args.split][i]:
+                q_ids.append(dataset[self.data_args.split][i]['id'])
 
         for i in trange(
             0, len(inputs), self.eval_args.batch_size, desc="Predicting batches", position=1, leave=False
@@ -426,7 +428,8 @@ class ATSEvaluator(GenerationEvaluator):
 
         result_prefix = self.eval_args.eval_template + '_' + self.eval_args.lang
         
-        predictions = {q_id: output for q_id, output in zip(q_ids, outputs)}
+        if len(q_ids) != 0:
+            predictions = {q_id: output for q_id, output in zip(q_ids, outputs)}
         if 'mlqa' in self.eval_args.task:
             metrics_results = mlqa_evaluate(predictions, self.eval_args.lang)
         elif 'xquad' in self.eval_args.task:
@@ -515,6 +518,80 @@ class NLIEvaluator(GenerationEvaluator):
         accuracy = float(correct / len(hypotheses))
         # 返回准确率
         return {'accuracy': accuracy, '#fail': fail}
+
+class TTEvaluator(GenerationEvaluator):
+
+    def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
+        super().__init__(args)
+        
+        
+    def eval(self) -> None:
+        if "trust_remote_code" in inspect.signature(load_dataset).parameters:  # for datasets==2.16.0
+            kwargs = {"trust_remote_code": True}
+        else:
+            kwargs = {}
+
+        dataset = load_dataset(
+            path=os.path.join(self.eval_args.task_dir, self.eval_args.task),
+            name=self.eval_args.lang,
+            cache_dir=self.model_args.cache_dir,
+            download_mode=self.eval_args.download_mode,
+            token=self.model_args.hf_hub_token,
+            **kwargs,
+        )
+
+        inputs, outputs, labels = [], [], []
+        for i in trange(len(dataset[self.data_args.split]), desc="Formatting batches", position=1, leave=False):
+            support_set = (
+                dataset["validation"].shuffle().select(range(min(self.eval_args.n_shot, len(dataset["validation"]))))
+            )
+            
+            messages = self.eval_template.format_example(
+                target_data=dataset[self.data_args.split][i],
+                support_set=support_set,
+            )
+
+            input_ids, _ = self.template.encode_oneturn(tokenizer=self.tokenizer, messages=messages)
+            inputs.append({"input_ids": input_ids, "attention_mask": [1] * len(input_ids)})
+            labels.append(dataset[self.data_args.split][i]["tags"])
+
+        for i in trange(
+            0, len(inputs), self.eval_args.batch_size, desc="Predicting batches", position=1, leave=False
+        ):
+            batch_input = self.tokenizer.pad(
+                inputs[i : i + self.eval_args.batch_size], return_attention_mask=True, return_tensors="pt"
+            ).to(self.model.device)
+            preds = self.batch_generation(batch_input)
+            outputs += preds
+
+        # 包装一下outputs
+        # TODO LLM还是会出现生成不符合要求的内容，需要进一步处理
+        predictions = []
+        for output in outputs:
+            output = output.split('\n')
+            try:
+                output = [item.split(':')[1].strip() for item in output if item != '']
+            except:
+                raise Exception(f"output: {output}")
+            predictions.append(output)
+
+        # 确保 predictions 和 labels 的长度相同
+        assert len(predictions) == len(labels)
+        # 创建一个空的结果列表
+        results = []
+        # 遍历 predictions 和 labels，将每一对 prediction 和 label 打包为一个字典，然后添加到结果列表中
+        for prediction, label in zip(predictions, labels):
+            results.append({"prediction": prediction, "label": label})
+
+        metrics_results = self._calculate_metrics(hypotheses=predictions, labels=labels)
+        # metrics_results = None
+
+        result_prefix = self.eval_args.eval_template + '_' + self.eval_args.lang
+        self._save_results(results=results, metric_results=metrics_results, results_prefix=result_prefix)
+    
+    def _calculate_metrics(self, hypotheses: List[List[str]], labels: List[List[str]]) -> Dict[str, float]:
+        seq_eval_score = f1_score(labels, hypotheses)
+        return {"f1_score": seq_eval_score}
 
 # if __name__ == "__main__":
 #     evaluator = Evaluator()

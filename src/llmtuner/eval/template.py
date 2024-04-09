@@ -156,6 +156,30 @@ class NLIEvalTemplate(EvalTemplate):
         Converts dataset examples to messages.
         """
         return self._format_example(target_data, support_set)
+    
+
+@dataclass
+class TTEvalTemplate(EvalTemplate):
+    token_tag: str
+    response_token_tag: str
+    
+    def _parse_example(self, example: Dict[str, List[str]]) -> Tuple[str, str]:
+        r"""
+        input: a dict with keys {"tokens", "tags"}
+        output: a tuple of (prompt, response)
+        """
+        candidates = [self.token_tag.format(token=token) for token in example["tokens"]]
+        response = [self.response_token_tag.format(token=token, tag=tag) for token, tag in zip(example["tokens"], example["tags"])]
+        return "".join(candidates + [self.answer]), "".join(response)
+    
+    def format_example(
+        self, target_data: Dict[str, str], support_set: Sequence[Dict[str, str]]
+    ) -> List[Dict[str, str]]:
+        r"""
+        here template attribute denotes the language pair
+        Converts dataset examples to messages.
+        """
+        return self._format_example(target_data, support_set)
 
 eval_templates: Dict[str, "EvalTemplate"] = {}
 
@@ -173,6 +197,9 @@ def _register_abstractive_text_summarization_eval_template(name: str, system: st
 
 def _register_natural_language_inference_eval_template(name: str, system: str, answer: str, question: str) -> None:
     eval_templates[name] = NLIEvalTemplate(system=system, answer=answer, question=question)
+
+def _register_token_tagging_eval_template(name: str, system: str, answer: str, token_tag: str, response_token_tag: str) -> None:
+    eval_templates[name] = TTEvalTemplate(system=system, answer=answer, token_tag=token_tag, response_token_tag=response_token_tag)
 
 def get_eval_template(name: str) -> "EvalTemplate":
     eval_template = eval_templates.get(name, None)
@@ -310,4 +337,20 @@ _register_natural_language_inference_eval_template(
             Answer as concisely as possible in the same format as the examples below:\n\n",
     question="\nQuestion:\n{question}\n",
     answer="True or False?\nAnswer: "
+)
+
+_register_token_tagging_eval_template(
+    name="pan-x",
+    system="".join("You are an NLP assistant whose purpose is to perform Named Entity Recognition(NER). "
+            "NER involves identifying and classifying named entities in a text into predefined categories "
+            "such as person names, organizations, locations, and others. "
+            "You will need to use the tags defined below: "
+            "O means the word doesn’t correspond to any entity. "
+            "B-PER/I-PER means the word corresponds to the beginning of/is inside a person entity. "
+            "B-ORG/I-ORG means the word corresponds to the beginning of/is inside an organization entity. "
+            "B-LOC/I-LOC means the word corresponds to the beginning of/is inside a location entity. "
+            "Do not try to answer the question! Just tag each token in the following.\n\n"),
+    answer="\nThe above tokens can be categorized into one of these tags: {O, B-PER, I-PER, B-ORG, I-ORG, B-LOC, I-LOC}. The corresponding tags are as follows:\n",
+    token_tag="\n{token}: ",
+    response_token_tag="\n{token}: {tag}",
 )
