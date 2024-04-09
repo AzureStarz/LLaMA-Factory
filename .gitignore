@@ -21986,3 +21986,16 @@ evaluation/mlqa/data/test/test-context-vi-question-vi-preprocess.json
 evaluation/mlqa/data/test/test-context-vi-question-vi-sample100.json
 evaluation/mlqa/data/test/test-context-zh-question-zh-preprocess.json
 evaluation/mlqa/data/test/test-context-zh-question-zh-sample100.json
+evaluation/xquad/data/dev/xquad_dev.json
+evaluation/xquad/data/test/ar-sample100.json
+evaluation/xquad/data/test/de-sample100.json
+evaluation/xquad/data/test/el-sample100.json
+evaluation/xquad/data/test/en-sample100.json
+evaluation/xquad/data/test/es-sample100.json
+evaluation/xquad/data/test/hi-sample100.json
+evaluation/xquad/data/test/ro-sample100.json
+evaluation/xquad/data/test/ru-sample100.json
+evaluation/xquad/data/test/th-sample100.json
+evaluation/xquad/data/test/tr-sample100.json
+evaluation/xquad/data/test/vi-sample100.json
+evaluation/xquad/data/test/zh-sample100.json

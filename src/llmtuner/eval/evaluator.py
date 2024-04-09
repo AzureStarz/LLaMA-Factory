@@ -425,7 +425,7 @@ class ATSEvaluator(GenerationEvaluator):
             results.append({"prediction": output, "reference": label})
 
         result_prefix = self.eval_args.eval_template + '_' + self.eval_args.lang
-        if 'mlqa' in self.eval_args.task:
+        if 'mlqa' in self.eval_args.task or 'xquad' in self.eval_args.task:
             predictions = {q_id: output for q_id, output in zip(q_ids, outputs)}
             metrics_results = mlqa_evaluate(predictions, self.eval_args.lang)
         else:

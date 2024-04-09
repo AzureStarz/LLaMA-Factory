@@ -284,6 +284,16 @@ _register_abstractive_text_summarization_eval_template(
     answer="\nReferring to the passage above, the correct answer to the given question is: ",
 )
 
+_register_abstractive_text_summarization_eval_template(
+    name="xquad",
+    system="You are an NLP assistant whose purpose is to solve reading comprehension problems. \
+        You will be provided questions on a set of passages and you will need to provide the answer as it appears in the passage. \
+            The answer should be in the same language as the question and the passage.\n\n",
+    passage="\nPassage:\n{passage}\n",
+    question="\nQuestion:\n{question}\n",
+    answer="\nReferring to the passage above, the correct answer to the given question is: ",
+)
+
 _register_natural_language_inference_eval_template(
     name="xnli",
     system="You are an NLP assistant whose purpose is to solve Natural Language Inference(NLI) problems. \
