@@ -25,6 +25,7 @@ COMET_DIR="/home/export/base/ycsc_chenkh/hitici_02/online1/data/pretrained-model
 from ..data import get_template_and_fix_tokenizer
 from ..extras.constants import CHOICES, SUBJECTS, BI_CHOICES
 from ..extras.mlqa_evaluation import mlqa_evaluate, xquad_evaluate
+from ..extras.mgsm_eval import msgm_eval
 from ..hparams import get_eval_args
 from ..model import load_model, load_tokenizer
 from .template import get_eval_template
@@ -34,6 +35,8 @@ def _remove_punctuation(text):
     translator = str.maketrans('', '', string.punctuation)
     # 使用 translate() 方法去除标点符号
     return text.translate(translator)
+
+# TODO 单独把metric计算放到另一个py文件中
 class Evaluator:
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
         self.model_args, self.data_args, self.eval_args, finetuning_args = get_eval_args(args)
@@ -401,6 +404,7 @@ class ATSEvaluator(GenerationEvaluator):
             messages = self.eval_template.format_example(
                 target_data=dataset[self.data_args.split][i],
                 support_set=support_set,
+                lang=self.eval_args.lang if 'mgsm' in self.eval_args.task or 'msvamp' in self.eval_args.task else None
             )
 
             input_ids, _ = self.template.encode_oneturn(tokenizer=self.tokenizer, messages=messages)
@@ -433,8 +437,11 @@ class ATSEvaluator(GenerationEvaluator):
         if 'mlqa' in self.eval_args.task:
             metrics_results = mlqa_evaluate(predictions, self.eval_args.lang)
         elif 'xquad' in self.eval_args.task:
-            metrics_results = xquad_evaluate(predictions, self.eval_args.lang)    
+            metrics_results = xquad_evaluate(predictions, self.eval_args.lang)
+        elif 'mgsm' in self.eval_args.task or 'msvamp' in self.eval_args.task:
+            metrics_results = msgm_eval(outputs, labels)
         else:
+            # calculate rouge
             metrics_results = self._calculate_metrics(hypotheses=outputs, labels=labels)
 
         self._save_results(results=results, metric_results=metrics_results, results_prefix=result_prefix)
@@ -446,6 +453,7 @@ class ATSEvaluator(GenerationEvaluator):
         avg_rouge_1 = sum(rouge_1) / len(rouge_1)
         avg_rouge_l = sum(rouge_l) / len(rouge_l)
         return {"rouge_1": avg_rouge_1, "rouge_l": avg_rouge_l}
+
 
 #TODO improve the evaluation efficiency (too much fail cases happened)
 class NLIEvaluator(GenerationEvaluator):

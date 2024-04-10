@@ -115,25 +115,34 @@ class MMTEvalTemplate(EvalTemplate):
 class ATSEvalTemplate(EvalTemplate):
     passage: str
     question: str
+    language_mapping = {'bn': 'Bengali', 'en': 'English', 'de': 'German', 'es': 'Spanish', 
+                        'fr': 'French', 'ja': 'Japanese', 'ru': 'Russian', 'zh': 'Chinese', 
+                        'th': 'Thai', 'te': 'Telugu', 'sw': 'Swahili'}
     
     def _parse_example(self, example: Dict[str, str]) -> Tuple[str, str]:
         r"""
         input: a dict with keys {"passage", "summary"}
         output: a tuple of (prompt, response)
         """
-        passage = self.passage.format(passage=example["passage"])
+        passage = self.passage
+        if "passage" in example.keys():
+            passage = self.passage.format(passage=example["passage"])
         question = self.question
         if "question" in example.keys():
             question = self.question.format(question=example["question"])
         return passage + question + self.answer, example["summary"]
     
     def format_example(
-        self, target_data: Dict[str, str], support_set: Sequence[Dict[str, str]]
+        self, target_data: Dict[str, str], support_set: Sequence[Dict[str, str]], lang: str = None
     ) -> List[Dict[str, str]]:
         r"""
         here template attribute denotes the language pair
         Converts dataset examples to messages.
         """
+        if lang:
+            if lang in self.language_mapping:
+                lang = self.language_mapping[lang]
+            self.system = self.system.format(lang=lang)
         return self._format_example(target_data, support_set)
 
 @dataclass
@@ -319,6 +328,22 @@ _register_abstractive_text_summarization_eval_template(
     passage="\nPassage:\n{passage}\n",
     question="\nQuestion:\n{question}\n",
     answer="\nReferring to the passage above, the correct answer to the given question is: ",
+)
+
+_register_abstractive_text_summarization_eval_template(
+    name="mgsm",
+    system="Below is an instruction that describes a task. Write a response that appropriately completes the request in {lang}. Please answer in {lang}.\n\n",
+    passage="",
+    question="###Instruction:\n{question}\n",
+    answer="\n###Answer: ",
+)
+
+_register_abstractive_text_summarization_eval_template(
+    name="msvamp",
+    system="Below is an instruction that describes a task. Write a response that appropriately completes the request in {lang}. Please answer in {lang}.\n\n",
+    passage="",
+    question="###Instruction:\n{question}\n",
+    answer="\n###Answer: ",
 )
 
 _register_natural_language_inference_eval_template(
