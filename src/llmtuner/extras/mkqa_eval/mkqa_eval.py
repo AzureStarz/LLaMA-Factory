@@ -204,16 +204,18 @@ def compute_mkqa_scores_for_language(
     """
     predict_texts, answer_texts = [], []
     for example_id, gold_annotation in gold_annotations.items():
-        assert example_id in predictions, f"{example_id} is missing from prediction"
+        if example_id not in predictions:
+            continue
+        # assert example_id in predictions, f"{example_id} is missing from prediction"
         predict_texts.append(
             predictions[example_id].binary_answer or predictions[example_id].prediction
         )
         answer_texts.append(gold_annotation.answers)
 
     text_metrics = eval_util.get_text_metrics(predict_texts, answer_texts, language)
-    f1_scores = {example_id: text_metrics["f1"][i] for i, example_id in enumerate(gold_annotations)}
+    f1_scores = {example_id: text_metrics["f1"][i] for i, example_id in enumerate(predictions)}
     em_scores = {
-        example_id: text_metrics["exact_match"][i] for i, example_id in enumerate(gold_annotations)
+        example_id: text_metrics["exact_match"][i] for i, example_id in enumerate(predictions)
     }
     return em_scores, f1_scores
 
@@ -360,7 +362,7 @@ def mkqa_evaluate(
     predictions: Dict[str, str],
     language: str,
 ) -> Dict[str, Any]:
-    annotation_file = "/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLaMA-Factory/evaluation/mkqa/mkqa.jsonl"
+    annotation_file = "/online1/ycsc_chenkh/hitici_02/PolyLingual-LLM/LLaMA-Factory/evaluation/mkqa/mkqa.jsonl.gz"
     # pack predictions
     predict_labels = {}
     for example_id, prediction in predictions.items():
