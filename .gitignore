@@ -160,7 +160,9 @@ cython_debug/
 .idea/
 
 # custom .gitignore
-evaluation/pan-x/data
+evaluation/pan-x/data/
+evaluation/mgsm/data/
+evaluation/msvamp/data/
 logs/
 user.config
 saves/
