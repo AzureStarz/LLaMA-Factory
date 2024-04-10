@@ -26,6 +26,7 @@ from ..data import get_template_and_fix_tokenizer
 from ..extras.constants import CHOICES, SUBJECTS, BI_CHOICES
 from ..extras.mlqa_evaluation import mlqa_evaluate, xquad_evaluate
 from ..extras.mgsm_eval import msgm_eval
+from ..extras.mkqa_eval.mkqa_eval import mkqa_evaluate
 from ..hparams import get_eval_args
 from ..model import load_model, load_tokenizer
 from .template import get_eval_template
@@ -440,6 +441,8 @@ class ATSEvaluator(GenerationEvaluator):
             metrics_results = xquad_evaluate(predictions, self.eval_args.lang)
         elif 'mgsm' in self.eval_args.task or 'msvamp' in self.eval_args.task:
             metrics_results = msgm_eval(outputs, labels)
+        elif 'mkqa' in self.eval_args.task:
+            metrics_results = mkqa_evaluate(predictions, self.eval_args.lang)
         else:
             # calculate rouge
             metrics_results = self._calculate_metrics(hypotheses=outputs, labels=labels)

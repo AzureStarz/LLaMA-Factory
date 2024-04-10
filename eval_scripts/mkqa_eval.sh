@@ -3,7 +3,7 @@
 base_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLaMA-Factory
 model_path=/home/export/base/ycsc_chenkh/hitici_02/online1/data/pretrained-models/Llama-2-7b
 # task-specific info
-task=mlqa
+task=mkqa
 eval_class=ats
 task_dir=${base_path}/evaluation
 template=llama2
@@ -14,7 +14,8 @@ lora_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SF
 save_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_pred_output/${task}_${baseline_model}
 mkdir -p ${save_path}
 
-langs=('en' 'de' 'es' 'ar' 'zh' 'vi' 'hi')
+# langs=(ar  de  es  fr  hu  ja  ko  nl  pl  ru  th  vi  zh_hk da  en  fi  he  it  km  ms  no  pt  sv  tr  zh_cn  zh_tw)
+langs=(en)
 for lang in ${langs[*]}
 do
 CUDA_VISIBLE_DEVICES=0 python ${base_path}/src/evaluate.py \
@@ -30,6 +31,6 @@ CUDA_VISIBLE_DEVICES=0 python ${base_path}/src/evaluate.py \
     --task ${task} \
     --split ${test_split} \
     --n_shot 5 \
-    --batch_size 8 \
+    --batch_size 1 \
     --seed 42
 done

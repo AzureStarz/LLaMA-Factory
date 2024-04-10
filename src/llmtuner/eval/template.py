@@ -331,6 +331,16 @@ _register_abstractive_text_summarization_eval_template(
 )
 
 _register_abstractive_text_summarization_eval_template(
+    name="mkqa",
+    system="You are an NLP assistant whose purpose is to solve open-domain question answering problems.\
+        Please leverage your own knowledge to answer the given question. \
+        The answer should be in the same language as the question\n\n",
+    passage="",
+    question="Question: {question}\n",
+    answer="\nAnswer: ",
+)
+
+_register_abstractive_text_summarization_eval_template(
     name="mgsm",
     system="Below is an instruction that describes a task. Write a response that appropriately completes the request in {lang}. Please answer in {lang}.\n\n",
     passage="",
