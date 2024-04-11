@@ -113,12 +113,12 @@ class Flores(datasets.GeneratorBasedBuilder):
     def _generate_examples(self, filepath):
         with open(filepath, encoding="utf-8") as f:
             data = json.load(f)
-            for i, old_instance in enumerate(data):
-                instance = old_instance
-                if "source" not in old_instance:
-                    instance = {
-                        "instruction": old_instance["instruction"],
-                        "source": old_instance["input"],
-                        "reference": old_instance["output"]
-                    }
+            for i, instance in enumerate(data):
+                # instance = old_instance
+                # if "source" not in old_instance.keys():
+                # instance = {
+                #     "instruction": old_instance["instruction"],
+                #     "source": old_instance["input"],
+                #     "reference": old_instance["output"]
+                # }
                 yield i, instance
