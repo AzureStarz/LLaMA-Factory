@@ -9,9 +9,9 @@ task_dir=${base_path}/evaluation
 template=llama2
 test_split=test
 # param path
-baseline_model=alpaca_en_llama2-7b
-lora_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_exp_output/${baseline_model}
-save_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_pred_output/${task}_${baseline_model}
+eval_model=alpaca_en_llama2-7b
+lora_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_exp_output/${eval_model}
+save_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_pred_output/${task}_${eval_model}
 mkdir -p ${save_path}
 
 langs=('en' 'de' 'es' 'ar' 'zh' 'vi' 'hi')

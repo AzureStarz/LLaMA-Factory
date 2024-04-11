@@ -33,17 +33,19 @@
 #     # comet-score --model ${comet_model_path} -s ${flores_data_dir}/eng.devtest -t ${output_dir}/predictions.txt -r ${output_dir}/labels.txt --quiet --only_system >> ${output_dir}/result.txt
 # fi
 # done
-
-task=flores
-eval_class=mmt
-task_dir=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLaMA-Factory/evaluation
-template=llama2
-test_split=test
-
+# constant path
 base_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLaMA-Factory
 model_path=/home/export/base/ycsc_chenkh/hitici_02/online1/data/pretrained-models/Llama-2-7b
-lora_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_exp_output/alpaca_en_llama2-7b
-save_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_pred_output/flores_alpaca_en_llama2-7b
+# task-specific info
+task=flores
+eval_class=mmt
+task_dir=${base_path}/evaluation
+template=llama2
+test_split=test
+# params path
+eval_model=bactrian-x_llama2-7b
+lora_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_exp_output/${eval_model}
+save_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_pred_output/${task}_${eval_model}
 mkdir -p ${save_path}
 
 langs=('ces_Latn' 'dan_Latn' 'ukr_Cyrl' 'bul_Cyrl' 'fin_Latn' 'hun_Latn' 'nob_Latn' 'ind_Latn' 'jpn_Jpan' 'kor_Hang' 'por_Latn' 'slv_Latn' 'vie_Latn' 'pol_Latn')

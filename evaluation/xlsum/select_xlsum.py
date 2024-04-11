@@ -29,7 +29,7 @@ for filename in glob.glob(os.path.join(source_dir, '*.jsonl')):
     with open(filename, 'r') as f:
         lines = []
         for i, line in enumerate(f):
-            if i == 1000:
+            if 'test' in filename and i == 1000:
                 break
             lines.append(line)
     

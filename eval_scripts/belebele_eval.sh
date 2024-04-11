@@ -1,15 +1,17 @@
 #!/bin/bash
-
-task=belebele
-eval_class=mrc
-task_dir=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLaMA-Factory/evaluation
-template=llama2
-test_split=test
-
+# constant path
 base_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLaMA-Factory
 model_path=/home/export/base/ycsc_chenkh/hitici_02/online1/data/pretrained-models/Llama-2-7b
-lora_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_exp_output/alpaca_en_llama2-7b
-save_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_pred_output/belebele_alpaca_en_llama2-7b/fewshot_eng_examples
+# task-specific info
+task=belebele
+eval_class=mrc
+task_dir=${base_path}/evaluation
+template=llama2
+test_split=test
+# param path
+eval_model=bactrian-x_llama2-7b
+lora_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_exp_output/${eval_model}
+save_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_pred_output/${task}_${eval_model}/fewshot_eng_examples
 mkdir -p ${save_path}
 
 langs=('ces_Latn' 'dan_Latn' 'ukr_Cyrl' 'bul_Cyrl' 'fin_Latn' 'hun_Latn' 'nob_Latn' 'ind_Latn' 'jpn_Jpan' 'kor_Hang' 'por_Latn' 'slv_Latn' 'vie_Latn' 'pol_Latn')

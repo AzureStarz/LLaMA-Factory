@@ -9,11 +9,13 @@ task_dir=${base_path}/evaluation
 template=llama2
 test_split=test
 # param path
-lora_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_exp_output/alpaca_en_llama2-7b
-save_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_pred_output/xlsum_alpaca_en_llama2-7b
+eval_model=alpaca_en_llama2-7b
+lora_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_exp_output/${eval_model}
+save_path=/home/export/base/ycsc_chenkh/hitici_02/online1/PolyLingual-LLM/LLM-SFT_pred_output/${task}_${eval_model}
 mkdir -p ${save_path}
 
-langs=('indonesian' 'japanese' 'korean' 'portuguese' 'vietnamese' 'ukrainian')
+# langs=('indonesian' 'japanese' 'korean' 'portuguese' 'vietnamese' 'ukrainian')
+langs=('english' 'chinese_simplified')
 for lang in ${langs[*]}
 do
 CUDA_VISIBLE_DEVICES=0 python ${base_path}/src/evaluate.py \
@@ -28,7 +30,7 @@ CUDA_VISIBLE_DEVICES=0 python ${base_path}/src/evaluate.py \
     --task_dir ${task_dir} \
     --task ${task} \
     --split ${test_split} \
-    --n_shot 1 \
+    --n_shot 5 \
     --batch_size 1 \
     --seed 42
 done
