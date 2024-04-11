@@ -30,7 +30,7 @@ CUDA_VISIBLE_DEVICES=0 python ${base_path}/src/evaluate.py \
     --task_dir ${task_dir} \
     --task ${task} \
     --split ${test_split} \
-    --n_shot 5 \
-    --batch_size 1 \
+    --n_shot 1 \
+    --batch_size 4 \
     --seed 42
 done
