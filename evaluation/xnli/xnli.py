@@ -62,14 +62,18 @@ class XNLI(datasets.GeneratorBasedBuilder):
         )
         for language in language_list
     ]
-    MAPPING = {'entailment': 'True', 'contradiction': 'False', 'neutral': 'Neither'}
+    MAPPING = {'entailment': 'A', 'contradiction': 'B', 'neutral': 'C'}
+    # MAPPING = {'entailment': 'True', 'contradiction': 'False', 'neutral': 'Neither'}
 
     def _info(self):
         features = datasets.Features(
             {
-                "premise": datasets.Value("string"),
-                "hypothesis": datasets.Value("string"),
-                "label": datasets.Value("string"),
+                "passage": datasets.Value("string"),
+                "question": datasets.Value("string"),
+                "A": datasets.Value("string"),
+                "B": datasets.Value("string"),
+                "C": datasets.Value("string"),
+                "answer": datasets.Value("string"),
             }
         )
         return datasets.DatasetInfo(
@@ -108,8 +112,12 @@ class XNLI(datasets.GeneratorBasedBuilder):
             for i, line in enumerate(f):
                 data = json.loads(line)
                 instance = {
-                    "premise": data["sentence1"],
-                    "hypothesis": data["sentence2"],
-                    "label": self.MAPPING[data["gold_label"]]
+                    "passage": data["sentence1"],
+                    "question": data["sentence2"],
+                    "A": "entailment",
+                    "B": "contradiction",
+                    "C": "neutral",
+                    # "label": data["gold_label"],
+                    "answer": self.MAPPING[data["gold_label"]]
                 }
                 yield i, instance

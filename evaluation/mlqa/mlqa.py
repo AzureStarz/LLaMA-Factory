@@ -73,7 +73,7 @@ class MLQA(datasets.GeneratorBasedBuilder):
                 name=datasets.Split.TEST,
                 gen_kwargs={
                     "filepath": os.path.join(
-                        data_dir, "data", "test", f"test-context-{language}-question-{language}-sample100.json"
+                        data_dir, "data", "test", f"test-context-{language}-question-{language}-preprocess.json"
                     ),
                 },
             ),
@@ -81,7 +81,7 @@ class MLQA(datasets.GeneratorBasedBuilder):
                 name=datasets.Split.VALIDATION,
                 gen_kwargs={
                     "filepath": os.path.join(
-                        data_dir, "data", "dev", f"dev-context-{language}-question-{language}-sample100.json"
+                        data_dir, "data", "dev", f"dev-context-{language}-question-{language}-preprocess.json"
                     ),
                 },
             ),

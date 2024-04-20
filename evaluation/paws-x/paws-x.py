@@ -59,9 +59,11 @@ class Paws_x(datasets.GeneratorBasedBuilder):
     def _info(self):
         features = datasets.Features(
             {
-                "premise": datasets.Value("string"),
-                "hypothesis": datasets.Value("string"),
-                "label": datasets.Value("string"),
+                "passage": datasets.Value("string"),
+                "question": datasets.Value("string"),
+                "A": datasets.Value("string"),
+                "B": datasets.Value("string"),
+                "answer": datasets.Value("string"),
             }
         )
         return datasets.DatasetInfo(
@@ -98,10 +100,17 @@ class Paws_x(datasets.GeneratorBasedBuilder):
     def _generate_examples(self, filepath):
         # Training set is in tsv format
         df = pd.read_csv(filepath, sep="\t")
-        df.columns = ["id", "premise", "hypothesis", "label"]
+        df.columns = ["id", "sentence1", "sentence2", "label"]
         # 利用apply方法将df["answer"]从0,1映射成False, True
-        df["label"] = df["label"].apply(lambda x: self.MAPPING[str(x)])
-        selected_cols = ["premise", "hypothesis", "label"]
+        # df["label"] = df["label"].apply(lambda x: self.MAPPING[str(x)])
+        selected_cols = ["sentence1", "sentence2", "label"]
 
-        for i, instance in enumerate(df[selected_cols].to_dict(orient="records")):
+        for i, _instance in enumerate(df[selected_cols].to_dict(orient="records")):
+            instance = {
+                "passage": _instance["sentence1"],
+                "question": _instance["sentence2"],
+                "A": "Yes",
+                "B": "No",
+                "answer": chr(ord('A') + int(_instance["label"])),
+            }
             yield i, instance

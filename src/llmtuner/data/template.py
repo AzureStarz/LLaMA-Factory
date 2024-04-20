@@ -240,7 +240,7 @@ def _register_template(
     ```
     """
     eos_slots = [] if efficient_eos else [{"eos_token"}]
-    template_class = Llama2Template if name.startswith("llama2") else Template
+    template_class = Llama2Template if name.startswith("llama") else Template
     default_user_formatter = StringFormatter(slots=["{{content}}"])
     default_assistant_formatter = StringFormatter(slots=["{{content}}"] + eos_slots)
     default_function_formatter = FunctionFormatter(slots=["Action: {{name}}\nAction Input: {{arguments}}"] + eos_slots)
@@ -385,7 +385,7 @@ _register_template(
     format_user=StringFormatter(slots=["### Instruction:\n{{content}}\n\n### Response:\n"]),
     format_separator=EmptyFormatter(slots=["\n\n"]),
     default_system=(
-        "Below is an instruction that describes a task. " "Write a response that appropriately completes the request."
+        "Below is an instruction that describes a task. " "Write a response that appropriately completes the request.\n\n"
     ),
 )
 
@@ -620,6 +620,22 @@ _register_template(
     format_user=StringFormatter(slots=[{"bos_token"}, "[INST] {{content}} [/INST]"]),
     format_system=StringFormatter(slots=["<<SYS>>\n{{content}}\n<</SYS>>\n\n"]),
     default_system="You are a helpful assistant. 你是一个乐于助人的助手。",
+)
+
+_register_template(
+    name="llama3",
+    format_user=StringFormatter(slots=[{"bos_token"}, "<|start_header_id|>user<|end_header_id|>\n\n{{content}}<|eot_id|><|start_header_id|>assistant<|end_header_id|>"]),
+    format_system=StringFormatter(slots=["<|start_header_id|>system<|end_header_id|>\n\n{{content}}<|eot_id|>"]),
+    default_system=(
+        "You are a helpful, respectful and honest assistant. "
+        "Always answer as helpfully as possible, while being safe. "
+        "Your answers should not include any harmful, unethical, "
+        "racist, sexist, toxic, dangerous, or illegal content. "
+        "Please ensure that your responses are socially unbiased and positive in nature.\n\n"
+        "If a question does not make any sense, or is not factually coherent, "
+        "explain why instead of answering something not correct. "
+        "If you don't know the answer to a question, please don't share false information."
+    ),
 )
 
 

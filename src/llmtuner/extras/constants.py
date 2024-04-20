@@ -2,7 +2,7 @@ from collections import OrderedDict, defaultdict
 from enum import Enum
 from typing import Dict, Optional
 
-
+TRI_CHOICES = ["A", "B", "C"]
 CHOICES = ["A", "B", "C", "D"]
 BI_CHOICES = ["A", "B"]
 

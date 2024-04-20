@@ -25,7 +25,12 @@ for lang in LANGS:
                             'answers': answers,
                         }
                         new_data.append(data)
-                if len(new_data) > 100:
-                    with open(f"{dataset_dir}/{split}/{split}-context-{lang}-question-{lang}-sample100.json", "w") as f:
-                        json.dump(new_data, f, indent=4, ensure_ascii=False)
-                    break
+        #         if split == 'test' and  len(new_data) > 1000:
+        #             with open(f"{dataset_dir}/{split}/{split}-context-{lang}-question-{lang}-preprocess.json", "w") as f:
+        #                 json.dump(new_data, f, indent=4, ensure_ascii=False)
+        #                 break
+        # if split == "dev":
+        #     with open(f"{dataset_dir}/{split}/{split}-context-{lang}-question-{lang}-preprocess.json", "w") as f:
+        #         json.dump(new_data, f, indent=4, ensure_ascii=False)
+        with open(f"{dataset_dir}/{split}/{split}-context-{lang}-question-{lang}-preprocess.json", "w") as f:
+                json.dump(new_data, f, indent=4, ensure_ascii=False)

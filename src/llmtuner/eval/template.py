@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Sequence, Tuple
 
 from ..data import Role
-from ..extras.constants import CHOICES, BI_CHOICES
+from ..extras.constants import CHOICES, BI_CHOICES, TRI_CHOICES
 
 @dataclass
 class EvalTemplate:
@@ -24,7 +24,7 @@ class EvalTemplate:
         prompt, response = self._parse_example(target_data)
         messages.append({"role": Role.USER.value, "content": prompt})
         messages.append({"role": Role.ASSISTANT.value, "content": response})
-        messages[0]["content"] = self.system + messages[0]["content"]
+        # messages[0]["content"] = self.system + messages[0]["content"]
         return messages
 
 @dataclass
@@ -97,7 +97,7 @@ class MMTEvalTemplate(EvalTemplate):
         input: a dict with keys {"source", "reference"}
         output: a tuple of (prompt, response)
         """
-        return example["input"] + self.answer, self.force_decoder_prefix + example["output"]
+        return example["input"] + self.answer, example["output"]
     
     def format_example(
         self, target_data: Dict[str, str], support_set: Sequence[Dict[str, str]], lang_pair: str
@@ -237,7 +237,7 @@ _register_multilingual_machine_translation_eval_template(
     name="flores",
     system="You are a machine translation system that translates sentences from {src} to {tgt}. You just respond with the translation, without any additional comments.\n\n",
     answer="\nTranslate to {tgt} ",
-    force_decoder_prefix="Suer, here's the translation: ",
+    force_decoder_prefix="Sure, here's the translation:\n\n",
 )
 
 _register_machine_reading_comprehension_eval_template(
@@ -256,10 +256,10 @@ _register_machine_reading_comprehension_eval_template(
     system="You are an AI assistant whose purpose is to perform story continuation. \
         You will be provided a story and two choices, where the task is to select the choice that is more plausibly the continuation for the story. \
             Answer in the same format as the examples below:\n\n",
-    passage="### Story:\n{passage}\n",
-    question="What is a possible continuation for the story given the following options ?",
+    passage="\n### Story:\n{passage}\n",
+    question="\n### Instruction:\nWhat is a possible continuation for the story given the following options?",
     choice="\n{choice}. {content}",
-    answer="\nAnswer: ",
+    answer="\n### Answer: ",
     prefix=" ",
     choice_list=BI_CHOICES,
 )
@@ -269,10 +269,10 @@ _register_machine_reading_comprehension_eval_template(
     system="You are an NLP assistant whose purpose is to detect whether the comment contains toxicity. \
         Toxicity is defined as anything rude, disrespectful or otherwise likely to make someone leave a discussion. \
             The objective is to identify toxic comments. Answer as concisely as possible in the same format as the examples below:\n\n",
-    passage="Comment:\n{passage}\n",
-    question="Should this online comment be removed for its toxicity?",
+    passage="### Comment:\n{passage}\n",
+    question="### Instruction:\nShould this online comment be removed for its toxicity?",
     choice="\n{choice}. {content}",
-    answer="\nAnswer: ",
+    answer="\n### Answer: ",
     prefix=" ",
     choice_list=BI_CHOICES,
 )
@@ -281,10 +281,10 @@ _register_machine_reading_comprehension_eval_template(
     name="xwinograd",
     system="You are an NLP assistant whose purpose is to fill in the blank according to the context. \
         Answer as concisely as possible in the same format as the examples below:\n\n",
-    passage="\nSentence:\n{passage}\n",
-    question="Which of the following choices would you choose to replace the \'_\' to make the sentence coherent?",
+    passage="\n### Sentence:\n{passage}\n",
+    question="### Instruction:\nWhich of the following choices would you choose to replace the \'_\' to make the sentence coherent?",
     choice="\n{choice}. {content}",
-    answer="\nAnswer: ",
+    answer="\n### Answer: ",
     prefix=" ",
     choice_list=BI_CHOICES,
 )
@@ -295,7 +295,33 @@ _register_machine_reading_comprehension_eval_template(
         You will be provided a premise and two choices, where the task is to select the choice that more plausibly has a causal relation with the premise. \
             Answer in the same format as the examples below:\n\n",
     passage=" ",
-    question="What is the most likely {question_type} of the following event?\n{premise}\nHelp me pick the more plausible option:",
+    question="\n### Instruction:\nWhat is the most likely {question_type} of the following event?\n{premise}\nHelp me pick the more plausible option:",
+    choice="\n{choice}. {content}",
+    answer="\n### Answer: ",
+    prefix=" ",
+    choice_list=BI_CHOICES,
+)
+
+_register_machine_reading_comprehension_eval_template(
+    name="xnli",
+    system="You are an NLP assistant whose purpose is to solve Natural Language Inference(NLI) problems. \
+        NLI is the task of determining the inference relation between two (short, ordered) texts: entailment, contradiction, or neutral. \
+            Answer as concisely as possible in the same format as the examples below:\n\n",
+    passage="\n###Premise:\n{passage}\n",
+    question="\n###Hypothesis:\n{question}\n\nWhat is the inference relation between the two texts above?",
+    choice="\n{choice}. {content}\n",
+    answer="\nAnswer: ",
+    prefix=" ",
+    choice_list=TRI_CHOICES,
+)
+
+_register_machine_reading_comprehension_eval_template(
+    name="paws-x",
+    system="You are an NLP assistant whose purpose is to perform Paraphrase Identification. \
+        The goal of Paraphrase Identification is to determine whether a pair of sentences have the same meaning. \
+            Answer as concisely as possible in the same format as the examples below:\n\n",
+    passage="\n### Sentence1:\n{passage}\n",
+    question="\n### Sentence2:\n{question}\n\nAre the two sentences above have the same meaning?",
     choice="\n{choice}. {content}",
     answer="\nAnswer: ",
     prefix=" ",
@@ -305,9 +331,9 @@ _register_machine_reading_comprehension_eval_template(
 _register_abstractive_text_summarization_eval_template(
     name="xlsum",
     system="You are an NLP assistant whose purpose is to summarize any given article. You should summarize all important information concisely in the same language in which you have been provided the document.\n\n",
-    passage="###\nPassage:\n{passage}\n",
-    question=" ",
-    answer="###\nSummary: ",
+    passage="\n###Passage:\n{passage}\n",
+    question="\n###Instruction:\nSummarize the above passage.\n",
+    answer="\n###Summary: ",
 )
 
 _register_abstractive_text_summarization_eval_template(
@@ -315,8 +341,8 @@ _register_abstractive_text_summarization_eval_template(
     system="You are an NLP assistant whose purpose is to solve reading comprehension problems. \
         You will be provided questions on a set of passages and you will need to provide the answer as it appears in the passage. \
             The answer should be in the same language as the question and the passage.\n\n",
-    passage="\nPassage:\n{passage}\n",
-    question="\nQuestion:\n{question}\n",
+    passage="\n###Passage:\n{passage}\n",
+    question="\n###Question:\n{question}\n",
     answer="\nReferring to the passage above, the correct answer to the given question is: ",
 )
 
@@ -325,54 +351,54 @@ _register_abstractive_text_summarization_eval_template(
     system="You are an NLP assistant whose purpose is to solve reading comprehension problems. \
         You will be provided questions on a set of passages and you will need to provide the answer as it appears in the passage. \
             The answer should be in the same language as the question and the passage.\n\n",
-    passage="\nPassage:\n{passage}\n",
-    question="\nQuestion:\n{question}\n",
+    passage="\n###Passage:\n{passage}\n",
+    question="\n###Question:\n{question}\n",
     answer="\nReferring to the passage above, the correct answer to the given question is: ",
 )
 
 _register_abstractive_text_summarization_eval_template(
     name="mkqa",
     system="You are an NLP assistant whose purpose is to solve open-domain question answering problems.\
-        Please leverage your own knowledge to answer the given question. \
-        The answer should be in the same language as the question\n\n",
+        Please leverage your own knowledge to answer in the same language as the given question. \
+        Answer as concisely as possible in the same format as the examples below:\n\n",
     passage="",
-    question="Question: {question}\n",
-    answer="\nAnswer: ",
+    question="\n###Question:\n{question}\n",
+    answer="\nReferring to your onw knowledge, the correct answer to the given question is: ",
 )
 
 _register_abstractive_text_summarization_eval_template(
     name="mgsm",
     system="Below is an instruction that describes a task. Write a response that appropriately completes the request in {lang}. Please answer in {lang}.\n\n",
     passage="",
-    question="###Instruction:\n{question}\n",
-    answer="\n###Answer: ",
+    question="### Instruction:\n{question}\n",
+    answer="\n### Response: ",
 )
 
 _register_abstractive_text_summarization_eval_template(
     name="msvamp",
     system="Below is an instruction that describes a task. Write a response that appropriately completes the request in {lang}. Please answer in {lang}.\n\n",
     passage="",
-    question="###Instruction:\n{question}\n",
-    answer="\n###Answer: ",
+    question="### Instruction:\n{question}\n",
+    answer="\n### Response: ",
 )
 
-_register_natural_language_inference_eval_template(
-    name="xnli",
-    system="You are an NLP assistant whose purpose is to solve Natural Language Inference(NLI) problems. \
-        NLI is the task of determining the inference relation between two (short, ordered) texts: entailment, contradiction, or neutral. \
-            Answer as concisely as possible in the same format as the examples below:\n\n",
-    question="\nQuestion:\n{question}\n",
-    answer="True, False, or Neither?\nAnswer: "
-)
+# _register_natural_language_inference_eval_template(
+#     name="xnli",
+#     system="You are an NLP assistant whose purpose is to solve Natural Language Inference(NLI) problems. \
+#         NLI is the task of determining the inference relation between two (short, ordered) texts: entailment, contradiction, or neutral. \
+#             Answer as concisely as possible in the same format as the examples below:\n\n",
+#     question="\nQuestion:\n{question}\n",
+#     answer="True, False, or Neither?\nAnswer: "
+# )
 
-_register_natural_language_inference_eval_template(
-    name="paws-x",
-    system="You are an NLP assistant whose purpose is to perform Paraphrase Identification. \
-        The goal of Paraphrase Identification is to determine whether a pair of sentences have the same meaning. \
-            Answer as concisely as possible in the same format as the examples below:\n\n",
-    question="\nQuestion:\n{question}\n",
-    answer="True or False?\nAnswer: "
-)
+# _register_natural_language_inference_eval_template(
+#     name="paws-x",
+#     system="You are an NLP assistant whose purpose is to perform Paraphrase Identification. \
+#         The goal of Paraphrase Identification is to determine whether a pair of sentences have the same meaning. \
+#             Answer as concisely as possible in the same format as the examples below:\n\n",
+#     question="\nQuestion:\n{question}\n",
+#     answer="True or False?\nAnswer: "
+# )
 
 _register_token_tagging_eval_template(
     name="pan-x",

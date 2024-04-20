@@ -63,7 +63,8 @@ class Evaluator:
 class MultipleChoiceEvaluator(Evaluator):
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
         super().__init__(args)
-        self.choice_list = BI_CHOICES if self.eval_args.task == "xcopa" else CHOICES
+        # self.choice_list = BI_CHOICES if self.eval_args.task == "xcopa" else CHOICES
+        self.choice_list = self.eval_template.choice_list
         self.choice_inputs = [
             self.tokenizer.encode(self.eval_template.prefix + ch, add_special_tokens=False)[-1] for ch in self.choice_list
         ]
@@ -199,7 +200,7 @@ class MRCEvaluator(MultipleChoiceEvaluator):
                 target_data=dataset[self.data_args.split][i],
                 support_set=support_set,
             )
-            input_ids, _ = self.template.encode_oneturn(tokenizer=self.tokenizer, messages=messages)
+            input_ids, _ = self.template.encode_oneturn(tokenizer=self.tokenizer, messages=messages, system=self.eval_template.system)
             inputs.append({"input_ids": input_ids, "attention_mask": [1] * len(input_ids)})
             labels.append(messages[-1]["content"])
 
@@ -239,7 +240,7 @@ class GenerationEvaluator(Evaluator):
         generate_params = {
             "input_ids": batch_input.input_ids,
             "attention_mask": batch_input.attention_mask,
-            "eos_token_id": [self.tokenizer.eos_token_id],
+            "eos_token_id": [self.tokenizer.eos_token_id, self.tokenizer.convert_tokens_to_ids("<|eot_id|>")],
             # "eos_token_id": [self.tokenizer.eos_token_id, self.tokenizer.convert_tokens_to_ids(["<0x0A>"])[0]],
             "pad_token_id": self.tokenizer.pad_token_id,
             "return_dict_in_generate": True,
@@ -258,8 +259,8 @@ class GenerationEvaluator(Evaluator):
         for k in range(len(generation_output)):
             # res.append(_del_endswith_none(self.tokenizer.decode(generation_output[k][lengths[k]:], skip_special_tokens=True).strip()))
             prediction = self.tokenizer.decode(generation_output[k][input_lengths[k]:], skip_special_tokens=True).strip()
-            if hasattr(self.eval_template, 'force_decoder_prefix'):
-                prediction = prediction.replace(self.eval_template.force_decoder_prefix, "")
+            # if hasattr(self.eval_template, 'force_decoder_prefix'):
+            #     prediction = prediction.replace(self.eval_template.force_decoder_prefix, "")
             res.append(prediction)
         return res
 
@@ -299,7 +300,7 @@ class MMTEvaluator(GenerationEvaluator):
                 lang_pair=self.eval_args.lang_pair
             )
 
-            input_ids, _ = self.template.encode_oneturn(tokenizer=self.tokenizer, messages=messages)
+            input_ids, _ = self.template.encode_oneturn(tokenizer=self.tokenizer, messages=messages, system=self.eval_template.system)
             inputs.append({"input_ids": input_ids, "attention_mask": [1] * len(input_ids)})
             # labels.append(messages[-1]["content"])
             labels.append(dataset[self.data_args.split][i]['output'])
@@ -408,7 +409,7 @@ class ATSEvaluator(GenerationEvaluator):
                 lang=self.eval_args.lang if 'mgsm' in self.eval_args.task or 'msvamp' in self.eval_args.task else None
             )
 
-            input_ids, _ = self.template.encode_oneturn(tokenizer=self.tokenizer, messages=messages)
+            input_ids, _ = self.template.encode_oneturn(tokenizer=self.tokenizer, messages=messages, system=self.eval_template.system)
             inputs.append({"input_ids": input_ids, "attention_mask": [1] * len(input_ids)})
             labels.append(messages[-1]["content"])
             if 'id' in dataset[self.data_args.split][i]:
